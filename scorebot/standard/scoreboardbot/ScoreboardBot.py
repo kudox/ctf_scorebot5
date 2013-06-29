@@ -1,10 +1,12 @@
 from multiprocessing import Process
-import threading
+import threading, json
 
 from scorebot.common.communication.BotCommClient import BotCommClient
 from scorebot.common.communication.BotMessage import BotMessage
 
 from scorebot.standard.scoreboardbot.ScoreboardWebserver import ScoreboardWebserver
+
+import socket
 
 class ScoreboardServerThread(threading.Thread):
 
@@ -32,6 +34,9 @@ class ScoreboardBot(Process):
 		self.comm = None
 		self.init = init
 		self.logger = conf.buildLogger("ScoreboardBot")
+		
+		self.scoreClient = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+		self.scoreClient.connect(('localhost',6007))
 
 	def run(self):
 
@@ -54,6 +59,7 @@ class ScoreboardBot(Process):
 		while(True):
 			msg = self.comm.receive()
 			assert(msg.type == "UPDATE_SCORES")
+			
 			team_off_scores,team_def_scores,service_status = msg.data
 
 			assert(len(team_off_scores) == self.conf.numTeams())
@@ -61,8 +67,21 @@ class ScoreboardBot(Process):
 			assert(len(service_status) == self.conf.numTeams())
 
 			table_text = self.__genScoreTable(team_off_scores,team_def_scores,service_status)
+			self.__sendScoresToScoreboard(team_off_scores,team_def_scores,service_status)
 			self.server.updateScoreText(table_text)
-
+	
+	def __sendScoresToScoreboard(self, offense, defense, status):
+		j= {}		
+		for i in xrange(self.conf.numTeams()):
+			team_info = self.conf.getTeamInfoById(i)			
+			j[team_info.name] = {}
+			j[team_info.name]['offense'] =  offense[i]
+			j[team_info.name]['defense'] = defense[i]
+			for k in xrange(self.servicebot_conf.numServices()):
+				service_info = self.servicebot_conf.getServiceInfoById(k)
+				j[team_info.name][service_info.name] = status[i][k]
+		self.scoreClient.send(json.dumps(j))
+		
 	def __genDefaultTable(self):
 		team_off_scores = []
 		team_def_scores = []
