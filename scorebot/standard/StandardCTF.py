@@ -103,6 +103,7 @@ class StandardCTF(GameStateLogic):
 	def __endRound(self):
 		self.logger.debug("Ending round %d" % self.round)
 		team_off_scores,team_def_scores = self.scoring.updateRoundScores(self.round)
+		#TODO: add the round to the scoreboardbot message
 		self.scoreboardbot_dispatcher.sendMsg(BotMessage(
 			"UPDATE_SCORES",(team_off_scores,team_def_scores,self.service_status)))
 
