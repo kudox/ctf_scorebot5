@@ -71,15 +71,17 @@ class ScoreboardBot(Process):
 			self.server.updateScoreText(table_text)
 	
 	def __sendScoresToScoreboard(self, offense, defense, status):
-		j= {}		
+		j= []		
 		for i in xrange(self.conf.numTeams()):
 			team_info = self.conf.getTeamInfoById(i)			
-			j[team_info.name] = {}
-			j[team_info.name]['offense'] =  offense[i]
-			j[team_info.name]['defense'] = defense[i]
+			team = {}
+			team['name'] = team_info.name
+			team['offense'] =  offense[i]
+			team['defense'] = defense[i]
 			for k in xrange(self.servicebot_conf.numServices()):
 				service_info = self.servicebot_conf.getServiceInfoById(k)
-				j[team_info.name][service_info.name] = status[i][k]
+				team[service_info.name] = status[i][k]
+			j.append(team)
 		self.scoreClient.send(json.dumps(j))
 		
 	def __genDefaultTable(self):
