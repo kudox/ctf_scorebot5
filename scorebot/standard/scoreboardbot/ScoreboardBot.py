@@ -82,7 +82,10 @@ class ScoreboardBot(Process):
 				service_info = self.servicebot_conf.getServiceInfoById(k)
 				team[service_info.name] = status[i][k]
 			j.append(team)
-		self.scoreClient.send(json.dumps(j))
+		resp = {}
+		resp['cmd'] = 'scorebot'
+		resp['data'] = j
+		self.scoreClient.send(json.dumps(resp))
 		
 	def __genDefaultTable(self):
 		team_off_scores = []
