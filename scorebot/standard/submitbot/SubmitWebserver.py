@@ -30,6 +30,8 @@ class SubmitHttpHandler(SimpleHTTPRequestHandler):
 		if(VALID_FILE_REGEX.search(self.path) != None or self.path == "/"):
 			self.path = FILE_PATH+self.path
 			SimpleHTTPRequestHandler.do_GET(self)
+		elif self.path == "/flag":
+			self.do_POST()
 		else:
 			self.send_response(404)
 			self.end_headers()
