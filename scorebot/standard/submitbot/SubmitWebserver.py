@@ -25,32 +25,90 @@ def extractNetworkValue(ip_txt,masksize):
 	return ip & mask
 
 class SubmitHttpHandler(SimpleHTTPRequestHandler):
+	def send_head(self):
+		"""Common code for GET and HEAD commands.
 
+		This sends the response code and MIME headers.
+
+		Return value is either a file object (which has to be copied
+		to the outputfile by the caller unless the command was HEAD,
+		and must be closed by the caller under all circumstances), or
+		None, in which case the caller has nothing further to do.
+
+		"""
+		path = self.translate_path(self.path)
+		f = None
+		if os.path.isdir(path):
+			if not self.path.endswith('/'):
+				# redirect browser - doing basically what apache does
+				self.send_response(301)
+				self.send_header("Location", self.path + "/")
+				self.end_headers()
+				return None
+			for index in "index.html", "index.htm":
+				index = os.path.join(path, index)
+				if os.path.exists(index):
+					path = index
+					break
+			else:
+				return self.list_directory(path)
+		ctype = self.guess_type(path)
+		try:
+			# Always read in binary mode. Opening files in text mode may cause
+			# newline translations, making the actual size of the content
+			# transmitted *less* than the content-length!
+			f = open(path, 'rb')
+		except IOError:
+			self.send_error(404, "File not found")
+			return None
+		self.send_response(200)
+		self.send_header("Content-type", ctype)
+		fs = os.fstat(f.fileno())
+		self.send_header("Content-Length", str(fs[6]))
+		self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
+		self.send_header('Access-Control-Allow-Origin', '*')
+		self.end_headers()
+		return f
+	
 	def do_GET(self):
 		if(VALID_FILE_REGEX.search(self.path) != None or self.path == "/"):
 			self.path = FILE_PATH+self.path
 			SimpleHTTPRequestHandler.do_GET(self)
-		elif self.path == "/flag":
-			self.do_POST()
 		else:
 			self.send_response(404)
 			self.end_headers()
-
-	def do_POST(self):
-		contentType, ct_dict = cgi.parse_header(self.headers.getheader('content-type'))
-		length_str,cl_dict = cgi.parse_header(self.headers.getheader('content-length'))
-
-		data = cgi.parse_qs(self.rfile.read(int(length_str)))
-		result = self.__update(self.client_address[0],data['flag'][0])
-
-		self.send_response(200)
+			
+	def do_OPTIONS(self):
+		self.send_response(200, "OK")
+		self.send_header('Access-Control-Allow-Origin', '*')
+		self.send_header('Access-Control-Allow-Methods', 'POST, GET, HEAD, OPTIONS')
+		self.send_header('Access-Control-Max-Age', '30')
+		self.send_header("Access-Control-Allow-Headers", "origin, x-requested-with, content-type")  
+		self.send_header('Content-Type', 'text/html')
 		self.end_headers()
-		header = open(FILE_PATH+os.sep+"result_header.html")
-		footer = open(FILE_PATH+os.sep+"result_footer.html")
+		
+	def do_POST(self):
 
-		self.wfile.write(header.read())
-		self.wfile.write(result)
-		self.wfile.write(footer.read())
+		try:
+			#contentType, ct_dict = cgi.parse_header(self.headers.getheader('content-type'))
+			#length_str,cl_dict = cgi.parse_header(self.headers.getheader('content-length'))
+			
+			#data = cgi.parse_qs(self.rfile.read(int(length_str)))
+			#result = self.__update(self.client_address[0],data['flag'][0])
+			#result = self.__update(self.client_address[0],"test")
+	
+			self.send_response(200)
+			self.end_headers()
+			#header = open(FILE_PATH+os.sep+"result_header.html")
+			#footer = open(FILE_PATH+os.sep+"result_footer.html")
+	
+			#self.wfile.write(header.read())
+			#self.wfile.write(result)
+			#self.wfile.write(footer.read())
+		except Exception as e:
+			self.send_response(500)
+			self.wfile.write(e)
+			print"Flag Submission Error",e
 
 	def __update(self,hacker_ip,flag_txt):
 		hacker_id = -1

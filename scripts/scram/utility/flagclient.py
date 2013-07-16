@@ -15,8 +15,11 @@ class FlagClient(object):
     def flagObserver(self,msg):
         print "Flag Observer Got Msg",msg
         j = json.loads(msg)
-        if(j['oldflag']!='none'):
-            print "FLAG:",j['oldflag']  
+        try:
+            if(j['oldflag']!='none'):
+                print "FLAG:",j['oldflag']  
+        except KeyError:
+            print "Old Flag not present!! You should not see this msg!!",msg
             
     def score(self,ip,flag,cookie):
         try:       
