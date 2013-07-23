@@ -2,6 +2,7 @@ import logging
 import threading
 import random
 import time
+import os,sys
 from multiprocessing import Process
 
 from scorebot.common.communication.BotCommClient import BotCommClient
@@ -46,7 +47,8 @@ class StaticFlagBot(Process):
 			self._genFlags()
 			
 	def _genFlags(self):
-		f = open("./flags.txt",'w')
+		path = os.path.relpath(os.path.dirname(__file__),sys.path[0])
+		f = open(path+"/flags.txt",'w')
 		self.flag_manager = self.conf.buildFlagManager()
 		for i in range(0,9999):
 			flag = Flag(99,99,9999,i)

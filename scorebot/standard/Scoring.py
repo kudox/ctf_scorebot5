@@ -25,12 +25,14 @@ class BasicScoring():
 
 		self.team_def_scores = []
 		self.team_off_scores = []
+		self.team_egg_scores = []
 		self.was_hacked = []
 
 		for teamId in xrange(self.conf.numTeams()):
 
 			self.team_def_scores.append(0)
 			self.team_off_scores.append(0)
+			self.team_egg_scores.append(0)
 			self.was_hacked.append([])
 
 			for serviceId in xrange(self.servicebot_conf.numServices()):
@@ -40,6 +42,10 @@ class BasicScoring():
 		for hackerId,flag in offensive_data:
 			self.team_off_scores[hackerId] += 1
 			self.was_hacked[flag.teamId][flag.serviceId] = True
+			
+	def updateStaticFlagInfo(self,egg_data):
+		for hackerId,flag in egg_data:
+			self.team_egg_scores[hackerId] += 1
 
 	def updateDefensiveInfo(self,defensive_data):
 		assert(self.round_def_data == None)
@@ -63,10 +69,10 @@ class BasicScoring():
 					self.team_def_scores[teamId] += 1
 				
 			team_name = self.conf.getTeamInfoById(teamId).name
-			self.logger.info("%r: off=%d def=%d" % (
-				team_name,self.team_off_scores[teamId],self.team_def_scores[teamId]))
+			self.logger.info("%r: off=%d def=%d egg=%d" % (
+				team_name,self.team_off_scores[teamId],self.team_def_scores[teamId],self.team_egg_scores[teamId]))
 
 		self.round_def_data = None
 		self.round += 1
 
-		return self.team_off_scores,self.team_def_scores
+		return self.team_off_scores,self.team_def_scores, self.team_egg_scores

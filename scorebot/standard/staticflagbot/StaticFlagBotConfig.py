@@ -14,7 +14,7 @@ class StaticFlagBotConfigHandler(ConfigHandler):
 		assert(config.hasSection("STATICFLAG_BOT") == False),"StaticFlagBot data already defined!"
 		staticflagbot_conf = StaticFlagBotConfig()
 		staticflagbot_conf.port = cip.getint(section,"port")
-		staticflagbot_conf.genflags = cip.getint(section,"genflags")
+		staticflagbot_conf.genflags = cip.getboolean(section,"genflags")
 		config.addSection("STATICFLAG_BOT",staticflagbot_conf)
 
 class StaticFlagBotConfig:

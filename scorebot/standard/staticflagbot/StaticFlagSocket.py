@@ -27,7 +27,7 @@ from scorebot.standard.staticflagbot.SharedObjects import *
 class StaticFlagServerProtocol(WebSocketServerProtocol):
      
     def onConnect(self,connectionRequest):  
-        print dir(connectionRequest)
+        #print dir(connectionRequest)
         return None
     def connectionMade(self):
         WebSocketServerProtocol.connectionMade(self)#always before your code
@@ -68,7 +68,10 @@ class StaticFlagSocket(object):
 
         #Get the correct *relative* path from wherever it is being executed
         FILE_PATH = os.path.relpath(os.path.dirname(__file__),sys.path[0])
-
+        self.logger.info("FilePath: %s"%FILE_PATH)
+        f = open(FILE_PATH+'/flags.txt','r')
+        self.staticFlags = f.readlines()
+        
         for team in conf.teams:
             assert(team.id == len(TEAM_DATA))
             cidr_ip,cidr_mask_txt = team.cidr.split("/")
@@ -89,40 +92,46 @@ class StaticFlagSocket(object):
         # validate IP address of submitter
         # validate the flag; mark the flag as validated and submitted
         j = json.loads(msg)
+        flag_txt = str(j['flag'])
+        hacker_ip = conn.peer.host
         
         hacker_id = -1
         for id, net, cidr_size in TEAM_DATA:
             if(extractNetworkValue(hacker_ip,cidr_size) == net):
                 hacker_id = id
                 break
-
+        self.logger.info("Static Flag from %s"%hacker_id)
         if(hacker_id == -1):
-            return "Flag was submitted from an IP not associated with any team!"
+            self.logger.info( "Flag was submitted from an IP not associated with any team!")
     
         #TODO: Flag submission frequency check
 
         try:
+            if flag_txt in self.staticFlags:
+                self.logger.info("Good Flag Lookup")
+                
             flag_validator = getSharedValidator()
             flag_collector = getSharedCollector()
-
+            self.logger.info("Static Flag: %s"%flag_txt)
             flag = FLAG_MANAGER.toFlag(flag_txt)
+
             result = flag_validator.validate(hacker_id,flag)
     
             if(result == FlagValidator.VALID):
                 flag_collector.enque((hacker_id,flag))
-                return "Flag accepted!"
+                self.logger.info( "Flag accepted!")
 
             elif(result == FlagValidator.SAME_TEAM):
-                return "Invalid Flag: Same team!"
+                self.logger.info( "Invalid Flag: Same team!")
 
             elif(result == FlagValidator.EXPIRED):
-                return "Invalid Flag: Too old!"
+                self.logger.info( "Invalid Flag: Too old!")
 
             elif(result == FlagValidator.REPEAT):
-                return "Invalid Flag: Repeated submission!"
+                self.logger.info( "Invalid Flag: Repeated submission!")
 
         except FlagParseException as e:
-            return "Invalid Flag!"
+            self.logger.info( "Invalid Flag! %s"%e)
         pass
     
     def _setUpListener(self, serviceName, port, protocol, handler=None):

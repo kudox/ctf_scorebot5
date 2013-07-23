@@ -60,28 +60,31 @@ class ScoreboardBot(Process):
 			msg = self.comm.receive()
 			assert(msg.type == "UPDATE_SCORES")
 			
-			team_off_scores,team_def_scores,service_status = msg.data
+			team_off_scores,team_def_scores,team_egg_scores, round, service_status = msg.data
 
 			assert(len(team_off_scores) == self.conf.numTeams())
 			assert(len(team_def_scores) == self.conf.numTeams())
 			assert(len(service_status) == self.conf.numTeams())
 
 			table_text = self.__genScoreTable(team_off_scores,team_def_scores,service_status)
-			self.__sendScoresToScoreboard(team_off_scores,team_def_scores,service_status)
+			self.__sendScoresToScoreboard(team_off_scores, team_def_scores, team_egg_scores, round, service_status)
 			self.server.updateScoreText(table_text)
 	
-	def __sendScoresToScoreboard(self, offense, defense, status):
-		j= []		
+	def __sendScoresToScoreboard(self, offense, defense, eggs, round, status):
+		j = []		
 		for i in xrange(self.conf.numTeams()):
 			team_info = self.conf.getTeamInfoById(i)			
 			team = {}
 			team['name'] = team_info.name
 			team['offense'] =  offense[i]
 			team['defense'] = defense[i]
+			team['eggs'] = eggs[i]
+			team['round'] = round
 			for k in xrange(self.servicebot_conf.numServices()):
 				service_info = self.servicebot_conf.getServiceInfoById(k)
 				team[service_info.name] = status[i][k]
 			j.append(team)
+		
 		resp = {}
 		resp['cmd'] = 'scorebot'
 		resp['data'] = j

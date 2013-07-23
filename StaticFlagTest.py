@@ -5,7 +5,7 @@ from autobahn.websocket import WebSocketServerFactory, \
                             WebSocketServerProtocol, \
                                listenWS
 from twisted.python import log
-import sys
+import sys,json
 
 class StaticFlagServerProtocol(WebSocketServerProtocol):
      
@@ -46,6 +46,8 @@ class StaticFlagSocket(object):
         # validate IP address of submitter
         # validate the flag; mark the flag as validated and submitted
         j = json.loads(msg)
+        print j
+        print conn.peer.host
 
         pass
     

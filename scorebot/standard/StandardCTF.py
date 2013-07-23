@@ -119,15 +119,14 @@ class StandardCTF(GameStateLogic):
 		
 	def __handleStaticFlagResults(self,submit_results):
 		#deals wit the "COLLECT_STATIC_FLAGS_RESULT"
-		self.scoring.updateOffensiveInfo(submit_results)
+		self.scoring.updateStaticFlagInfo(submit_results)
 		self.__endRound()
 
 	def __endRound(self):
 		self.logger.debug("Ending round %d" % self.round)
-		team_off_scores,team_def_scores = self.scoring.updateRoundScores(self.round)
-		#TODO: add the round to the scoreboardbot message
+		team_off_scores,team_def_scores, team_egg_scores = self.scoring.updateRoundScores(self.round)
 		self.scoreboardbot_dispatcher.sendMsg(BotMessage(
-			"UPDATE_SCORES",(team_off_scores,team_def_scores,self.service_status)))
+			"UPDATE_SCORES",(team_off_scores,team_def_scores,team_egg_scores, self.round, self.service_status)))
 
 		self.round += 1
 		execute_msg = BotMessage("EXECUTE_ROUND",self.round)

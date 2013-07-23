@@ -49,12 +49,6 @@ class FlagValidator:
 	def validate(self,submitterTeamId,flag):
 		now = time.time()
 
-		if(submitterTeamId == flag.teamId):
-			return self.SAME_TEAM
-
-		if(now - flag.timestamp > self.duration):
-			return self.EXPIRED
-
 		if(self.records[submitterTeamId].verifyUnique(flag,now) == False):
 			return self.REPEAT
 
