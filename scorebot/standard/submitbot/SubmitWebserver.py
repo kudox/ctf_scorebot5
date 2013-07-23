@@ -90,21 +90,21 @@ class SubmitHttpHandler(SimpleHTTPRequestHandler):
 	def do_POST(self):
 
 		try:
-			#contentType, ct_dict = cgi.parse_header(self.headers.getheader('content-type'))
-			#length_str,cl_dict = cgi.parse_header(self.headers.getheader('content-length'))
+			contentType, ct_dict = cgi.parse_header(self.headers.getheader('content-type'))
+			length_str,cl_dict = cgi.parse_header(self.headers.getheader('content-length'))
 			
-			#data = cgi.parse_qs(self.rfile.read(int(length_str)))
-			#result = self.__update(self.client_address[0],data['flag'][0])
+			data = cgi.parse_qs(self.rfile.read(int(length_str)))
+			result = self.__update(self.client_address[0],data['flag'][0])
 			#result = self.__update(self.client_address[0],"test")
 	
 			self.send_response(200)
 			self.end_headers()
-			#header = open(FILE_PATH+os.sep+"result_header.html")
-			#footer = open(FILE_PATH+os.sep+"result_footer.html")
+			header = open(FILE_PATH+os.sep+"result_header.html")
+			footer = open(FILE_PATH+os.sep+"result_footer.html")
 	
-			#self.wfile.write(header.read())
-			#self.wfile.write(result)
-			#self.wfile.write(footer.read())
+			self.wfile.write(header.read())
+			self.wfile.write(result)
+			self.wfile.write(footer.read())
 		except Exception as e:
 			self.send_response(500)
 			self.wfile.write(e)

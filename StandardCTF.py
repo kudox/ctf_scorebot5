@@ -15,6 +15,10 @@ from scorebot.standard.servicebot2.ServiceBot import ServiceBot
 from scorebot.standard.servicebot2.ServiceBotConfig import ServiceBotConfigHandler, ServiceConfigHandler
 from scorebot.standard.submitbot.SubmitBot import SubmitBot
 from scorebot.standard.submitbot.SubmitBotConfig import SubmitBotConfigHandler
+
+from scorebot.standard.staticflagbot.StaticFlagBot import StaticFlagBot
+from scorebot.standard.staticflagbot.StaticFlagBotConfig import StaticFlagBotConfigHandler
+
 from scorebot.standard.scoreboardbot.ScoreboardBot import ScoreboardBot
 from scorebot.standard.scoreboardbot.ScoreboardBotConfig import ScoreboardBotConfigHandler
 from scorebot.standard.StandardCTF import StandardCTF
@@ -47,6 +51,7 @@ def main(argv):
 	cip.addHandler(FlagConfigHandler())
 	cip.addHandler(ServiceBotConfigHandler())
 	cip.addHandler(SubmitBotConfigHandler())
+	cip.addHandler(StaticFlagBotConfigHandler())
 	cip.addHandler(ScoreboardBotConfigHandler())
 	cip.addHandler(ServiceConfigHandler())
 
@@ -63,6 +68,7 @@ def main(argv):
 		"SUBMIT_BOT",
 		"SCOREBOARD_BOT",
 		"SUBMIT_BOT",
+		"STATICFLAG_BOT",
 	]
 	assert(conf.isValid(required_sections)),"A required section is missing!"
 
@@ -83,6 +89,10 @@ def main(argv):
 		#Create SubmitBot
 		submit_bot = SubmitBot(conf,initialize)
 		submit_bot.start()
+		
+		#Create StaticFlagBot
+		staticflag_bot = StaticFlagBot(conf,initialize)
+		staticflag_bot.start()
 
 		#Create ScoreboardBot
 		scoreboard_bot = ScoreboardBot(conf,initialize)
@@ -90,6 +100,7 @@ def main(argv):
 
 		scoreboard_bot.join()
 		submit_bot.join()
+		staticflag_bot.join()
 		service_bot.join()
 		game_server_bot.join()
 

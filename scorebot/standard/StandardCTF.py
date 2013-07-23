@@ -15,6 +15,7 @@ class StandardCTF(GameStateLogic):
 		self.servicebot_dispatcher = None
 		self.submitbot_dispatcher = None
 		self.scoreboardbot_dispatcher = None
+		self.staticflagbot_dispatcher = None
 
 		self.conf = conf
 		self.servicebot_conf = conf.getSection("SERVICE_BOT")
@@ -27,7 +28,7 @@ class StandardCTF(GameStateLogic):
 		self.bot_server = bot_server
 
 	def handleBotMessage(self,msg,dispatcher):
-
+		self.logger.info("Bot Message:%s"%(msg.type))
 		if(msg.type == "CLIENT_HELLO"):
 			self.__handleNewClient(msg.data,dispatcher)
 
@@ -36,6 +37,9 @@ class StandardCTF(GameStateLogic):
 
 		elif(msg.type == "COLLECT_FLAGS_RESULT"):
 			self.__handleSubmitResults(msg.data)
+			
+		elif(msg.type == "COLLECT_STATIC_FLAGS_RESULT"):
+			self.__handleStaticFlagResults(msg.data)
 
 		else:
 			self.logger.error("Unknown message: %r %r" % (msg.type,msg.data))
@@ -56,6 +60,13 @@ class StandardCTF(GameStateLogic):
 			else:
 				self.logger.error("Submit Bot tried to connect again!")
 				return
+			
+		if(name == "STATICFLAG_BOT"):
+			if(self.staticflagbot_dispatcher == None):
+				self.staticflagbot_dispatcher = dispatcher
+			else:
+				self.logger.error("Static Flag Bot tried to connect again!")
+				return
 		
 		if(name == "SCOREBOARD_BOT"):
 			if(self.scoreboardbot_dispatcher == None):
@@ -73,6 +84,9 @@ class StandardCTF(GameStateLogic):
 			return False
 		
 		if(self.submitbot_dispatcher == None):
+			return False
+		
+		if(self.staticflagbot_dispatcher == None):
 			return False
 
 		if(self.scoreboardbot_dispatcher == None):
@@ -94,9 +108,17 @@ class StandardCTF(GameStateLogic):
 		assert(self.round == round)
 		self.service_status = data
 		self.scoring.updateDefensiveInfo(data)
+		#round ending so send msg to the submitbot to pass back flags
 		self.submitbot_dispatcher.sendMsg(BotMessage("COLLECT_FLAGS",None))
+		self.staticflagbot_dispatcher.sendMsg(BotMessage("COLLECT_STATIC_FLAGS",None))
 
 	def __handleSubmitResults(self,submit_results):
+		#deals wit the "COLLECT_FLAGS_RESULT"
+		self.scoring.updateOffensiveInfo(submit_results)
+		#self.__endRound()
+		
+	def __handleStaticFlagResults(self,submit_results):
+		#deals wit the "COLLECT_STATIC_FLAGS_RESULT"
 		self.scoring.updateOffensiveInfo(submit_results)
 		self.__endRound()
 
