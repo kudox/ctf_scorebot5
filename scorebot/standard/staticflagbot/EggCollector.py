@@ -1,6 +1,6 @@
 import threading
 
-class FlagCollector:
+class EggCollector:
 
 	def __init__(self):
 		self.recent_flags = []

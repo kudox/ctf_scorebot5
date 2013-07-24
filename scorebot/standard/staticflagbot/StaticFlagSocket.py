@@ -70,7 +70,7 @@ class StaticFlagSocket(object):
         FILE_PATH = os.path.relpath(os.path.dirname(__file__),sys.path[0])
         self.logger.info("FilePath: %s"%FILE_PATH)
         f = open(FILE_PATH+'/flags.txt','r')
-        self.staticFlags = f.readlines()
+        self.staticFlags = [line[:-1] for line in f]
         
         for team in conf.teams:
             assert(team.id == len(TEAM_DATA))
@@ -79,13 +79,9 @@ class StaticFlagSocket(object):
             TEAM_DATA.append((team.id,team_ip,int(cidr_mask_txt)))
 
         FLAG_MANAGER = conf.buildFlagManager()
-        
-
-        self.frontEndListeners={}
-        #load flags into memory here.
-               
+    
+        self.frontEndListeners={}               
         self._setUpListener("staticflag", self.port, StaticFlagServerProtocol,self._handle)
-        #self.reactor.run()
         
     def _handle(self,conn,msg):   
         #deal with the flag submission here.
@@ -100,42 +96,58 @@ class StaticFlagSocket(object):
             if(extractNetworkValue(hacker_ip,cidr_size) == net):
                 hacker_id = id
                 break
+            
         self.logger.info("Static Flag from %s"%hacker_id)
+        
         if(hacker_id == -1):
             self.logger.info( "Flag was submitted from an IP not associated with any team!")
-    
-        #TODO: Flag submission frequency check
+            j = {'result':"Invalid Flag"}
+            conn.sendMessage(json.dumps(j))
+            return
+        
+        if flag_txt.startswith("EGG"):
+            #HACK: so we can use the same flag logic for parsing.
+            #TODO: make an egg parser!
+            flag_txt = "FLG"+flag_txt[3:]
+            self._validateEgg(flag_txt)
+        else:
+            self._validateFlag(flag_txt)
 
+
+    
+    def _validateEgg(self,flag_txt):
         try:
+            
             if flag_txt in self.staticFlags:
-                self.logger.info("Good Flag Lookup")
+                self.logger.info("Valid Flag Lookup: %s"%flag_txt)
+                del self.staticFlags[flag_txt]
+                self.logger.info("Removed Submitted Flag: %s"%flag_txt)
+                self.logger.info("Static Flag Count: %d"%len(self.staticFlags))
                 
-            flag_validator = getSharedValidator()
-            flag_collector = getSharedCollector()
-            self.logger.info("Static Flag: %s"%flag_txt)
-            flag = FLAG_MANAGER.toFlag(flag_txt)
-
-            result = flag_validator.validate(hacker_id,flag)
+                flag_validator = getSharedValidator()
+                flag_collector = getSharedCollector()
+                flag = FLAG_MANAGER.toFlag(flag_txt)
     
-            if(result == FlagValidator.VALID):
-                flag_collector.enque((hacker_id,flag))
-                self.logger.info( "Flag accepted!")
-
-            elif(result == FlagValidator.SAME_TEAM):
-                self.logger.info( "Invalid Flag: Same team!")
-
-            elif(result == FlagValidator.EXPIRED):
-                self.logger.info( "Invalid Flag: Too old!")
-
-            elif(result == FlagValidator.REPEAT):
-                self.logger.info( "Invalid Flag: Repeated submission!")
+                result = flag_validator.validate(hacker_id,flag)
+        
+                if(result == FlagValidator.VALID):
+                    flag_collector.enque((hacker_id,flag))
+                    j = {'result':"Flag Accepted"}
+                    conn.sendMessage(json.dumps(j))
+            else:
+                self.logger.info( "Invalid Flag")
+                j = {'result':"Invalid Flag"}
+                conn.sendMessage(json.dumps(j))
 
         except FlagParseException as e:
+            j = {'result':"Invalid Flag"}
+            conn.sendMessage(json.dumps(j))
             self.logger.info( "Invalid Flag! %s"%e)
+            
+    def _validateFlag(self,flag_txt):
         pass
     
     def _setUpListener(self, serviceName, port, protocol, handler=None):
-        #print("[" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S') + "]" + " Setting Up Listener")
         url = "ws://localhost:%d"%(port)       
         factory = WebSocketServerFactory(url, debug=True, debugCodePaths=True)    
         factory.protocol = protocol

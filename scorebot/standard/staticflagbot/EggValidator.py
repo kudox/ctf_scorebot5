@@ -33,7 +33,7 @@ class SubmissionRecord:
 			self.flag_records = new_records
 			return result
 
-class FlagValidator:
+class EggValidator:
 
 	VALID = 0
 	SAME_TEAM = 1

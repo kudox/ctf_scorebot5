@@ -42,8 +42,9 @@ class StaticFlagBot(Process):
 		self.logger.info("In Static Flag Init started Webserver")
 		
 		self.staticFlagConf = self.conf.getSection("STATICFLAG_BOT")
-		#self.logger.info(dir(self.staticFlagConf))
+
 		if self.staticFlagConf.genflags:
+			self.logger.info("Generating Static Flags")
 			self._genFlags()
 			
 	def _genFlags(self):
@@ -53,6 +54,7 @@ class StaticFlagBot(Process):
 		for i in range(0,9999):
 			flag = Flag(99,99,9999,i)
 			flagText = self.flag_manager.toTxt(flag)
+			egg = "EGG"+flag[3:]
 			f.write(flagText+"\n")
 		f.close()
 			

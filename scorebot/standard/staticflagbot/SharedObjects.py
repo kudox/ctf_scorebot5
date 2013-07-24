@@ -1,21 +1,21 @@
-from scorebot.standard.staticflagbot.FlagValidator import FlagValidator
-from scorebot.standard.staticflagbot.FlagCollector import FlagCollector
+from scorebot.standard.staticflagbot.EggValidator import EggValidator
+from scorebot.standard.staticflagbot.EggCollector import EggCollector
 
-_shared_validator = None
-_shared_collector = None
+_shared_egg_validator = None
+_shared_egg_collector = None
 
-def setSharedValidator(validator):
-	global _shared_validator
-	_shared_validator = validator
+def setSharedEggValidator(validator):
+	global _shared_egg_validator
+	_shared_egg_validator = validator
 
-def getSharedValidator():
-	global _shared_validator
-	return _shared_validator
+def getSharedEggValidator():
+	global _shared_egg_validator
+	return _shared_egg_validator
 
-def setSharedCollector(collector):
-	global _shared_collector
-	_shared_collector = collector
+def setSharedEggCollector(collector):
+	global _shared_egg_collector
+	_shared_egg_collector = collector
 
-def getSharedCollector():
-	global _shared_collector
-	return _shared_collector
+def getSharedEggCollector():
+	global _shared_egg_collector
+	return _shared_egg_collector
