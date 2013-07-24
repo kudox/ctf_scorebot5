@@ -13,7 +13,6 @@ class FlagClient(object):
         self.port = port
         
     def flagObserver(self,msg):
-        print "Flag Observer Got Msg",msg
         j = json.loads(msg)
         try:
             if(j['oldflag']!='none'):
