@@ -20,8 +20,12 @@ from autobahn.websocket import WebSocketServerFactory, \
                                listenWS
                                
 from scorebot.common.models.Flag import FlagParseException, Flag
-from scorebot.standard.staticflagbot.FlagValidator import FlagValidator
-from scorebot.standard.staticflagbot.FlagCollector import FlagCollector
+
+from scorebot.standard.staticflagbot.EggValidator import EggValidator
+from scorebot.standard.staticflagbot.EggCollector import EggCollector
+from scorebot.standard.submitbot.FlagValidator import FlagValidator
+from scorebot.standard.submitbot.FlagCollector import FlagCollector
+
 from scorebot.standard.staticflagbot.SharedObjects import *
 
 class StaticFlagServerProtocol(WebSocketServerProtocol):
@@ -63,13 +67,16 @@ class StaticFlagSocket(object):
         
         #will likely move where these shared objects are created
         flag_conf = conf.getSection("FLAG")
+        
         setSharedValidator(FlagValidator(len(conf.teams),flag_conf.duration))
         setSharedCollector(FlagCollector())
+        setSharedEggValidator(EggValidator(len(conf.teams),flag_conf.duration))
+        setSharedEggCollector(EggCollector())
 
         #Get the correct *relative* path from wherever it is being executed
         FILE_PATH = os.path.relpath(os.path.dirname(__file__),sys.path[0])
         self.logger.info("FilePath: %s"%FILE_PATH)
-        f = open(FILE_PATH+'/flags.txt','r')
+        f = open(FILE_PATH+'/eggs.txt','r')
         self.staticFlags = [line[:-1] for line in f]
         
         for team in conf.teams:
@@ -106,26 +113,27 @@ class StaticFlagSocket(object):
             return
         
         if flag_txt.startswith("EGG"):
-            #HACK: so we can use the same flag logic for parsing.
-            #TODO: make an egg parser!
-            flag_txt = "FLG"+flag_txt[3:]
-            self._validateEgg(flag_txt)
+            self._validateEgg(flag_txt,hacker_id,conn)
         else:
-            self._validateFlag(flag_txt)
+            self._validateFlag(flag_txt,hacker_id,conn)
 
 
     
-    def _validateEgg(self,flag_txt):
+    def _validateEgg(self,flag_txt,hacker_id,conn):
         try:
             
             if flag_txt in self.staticFlags:
                 self.logger.info("Valid Flag Lookup: %s"%flag_txt)
-                del self.staticFlags[flag_txt]
+                self.staticFlags.remove(flag_txt)
                 self.logger.info("Removed Submitted Flag: %s"%flag_txt)
                 self.logger.info("Static Flag Count: %d"%len(self.staticFlags))
                 
-                flag_validator = getSharedValidator()
-                flag_collector = getSharedCollector()
+                #HACK: so we can use the same flag logic for parsing.
+                #TODO: make an egg parser!
+                flag_txt = "FLG"+flag_txt[3:]
+                
+                flag_validator = getSharedEggValidator()
+                flag_collector = getSharedEggCollector()
                 flag = FLAG_MANAGER.toFlag(flag_txt)
     
                 result = flag_validator.validate(hacker_id,flag)
@@ -144,8 +152,35 @@ class StaticFlagSocket(object):
             conn.sendMessage(json.dumps(j))
             self.logger.info( "Invalid Flag! %s"%e)
             
-    def _validateFlag(self,flag_txt):
-        pass
+    def _validateFlag(self,flag_txt,hacker_id,conn):
+        try:
+            flag_validator = getSharedValidator()
+            flag_collector = getSharedCollector()
+
+            flag = FLAG_MANAGER.toFlag(flag_txt)
+            result = flag_validator.validate(hacker_id,flag)
+    
+            if(result == FlagValidator.VALID):
+                flag_collector.enque((hacker_id,flag))
+                j = {'result':"Flag Accepted"}
+                conn.sendMessage(json.dumps(j))
+
+            elif(result == FlagValidator.SAME_TEAM):
+                j = {'result':"Invalid Flag: Same team!"}
+                conn.sendMessage(json.dumps(j))
+
+            elif(result == FlagValidator.EXPIRED):
+                j = {'result':"Invalid Flag: Too old!"}
+                conn.sendMessage(json.dumps(j))
+
+            elif(result == FlagValidator.REPEAT):
+                return "Invalid Flag: Repeated submission!"
+                j = {'result':"Invalid Flag: Repeated submission!"}
+                conn.sendMessage(json.dumps(j))
+
+        except FlagParseException as e:
+                j = {'result':"Invalid Flag!"}
+                conn.sendMessage(json.dumps(j))
     
     def _setUpListener(self, serviceName, port, protocol, handler=None):
         url = "ws://localhost:%d"%(port)       

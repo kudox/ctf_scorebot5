@@ -37,25 +37,28 @@ class StaticFlagBot(Process):
 		self.comm = None
 		self.logger = conf.buildLogger("StaticFlagBot")
 		self.init = init
-		self.logger.info("In Static Flag Init about to start Webserver")
-		self.webserver = WebserverThread(self.conf)
-		self.logger.info("In Static Flag Init started Webserver")
 		
 		self.staticFlagConf = self.conf.getSection("STATICFLAG_BOT")
 
 		if self.staticFlagConf.genflags:
-			self.logger.info("Generating Static Flags")
+			self.logger.info("Generating Static Eggs")
 			self._genFlags()
+		else:
+			self.logger.info("Not Generating Static Eggs")
+			
+		self.logger.info("In Static Flag Init about to start Webserver")
+		self.webserver = WebserverThread(self.conf)
+		self.logger.info("In Static Flag Init started Webserver")
 			
 	def _genFlags(self):
 		path = os.path.relpath(os.path.dirname(__file__),sys.path[0])
-		f = open(path+"/flags.txt",'w')
+		f = open(path+"/eggs.txt",'w')
 		self.flag_manager = self.conf.buildFlagManager()
 		for i in range(0,9999):
 			flag = Flag(99,99,9999,i)
 			flagText = self.flag_manager.toTxt(flag)
-			egg = "EGG"+flag[3:]
-			f.write(flagText+"\n")
+			egg = "EGG"+flagText[3:]
+			f.write(egg+"\n")
 		f.close()
 			
 	def run(self):
@@ -72,6 +75,7 @@ class StaticFlagBot(Process):
 		self.running = True
 
 		collector = getSharedCollector()
+		collectorEgg = getSharedEggCollector()
 
 		try:
 			self.comm.start()
@@ -82,8 +86,10 @@ class StaticFlagBot(Process):
 				assert(msg.type == "COLLECT_STATIC_FLAGS")
 				#collector is the "shared memory" between the webserver and this bot.
 				flags = collector.collect()
+				eggs = collectorEgg.collect()
 				#sending the collected flags
-				self.comm.send(BotMessage("COLLECT_STATIC_FLAGS_RESULT",flags))
+				self.comm.send(BotMessage("COLLECT_FLAGS_RESULT",flags))
+				self.comm.send(BotMessage("COLLECT_STATIC_FLAGS_RESULT",eggs))
 				
 			self.comm.kill()
 		except Exception as e:
