@@ -99,10 +99,13 @@ class StaticFlagSocket(object):
         hacker_ip = conn.peer.host
         
         hacker_id = -1
-        for id, net, cidr_size in TEAM_DATA:
-            if(extractNetworkValue(hacker_ip,cidr_size) == net):
+        for id, team_ip, cidr_size in TEAM_DATA:
+            if(hacker_ip == team_ip ):
                 hacker_id = id
-                break
+                break              
+            #if(extractNetworkValue(hacker_ip,cidr_size) == net):
+            #    hacker_id = id
+            #    break
             
         self.logger.info("Static Flag from %s"%hacker_id)
         
