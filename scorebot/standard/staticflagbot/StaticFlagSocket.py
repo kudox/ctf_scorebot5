@@ -97,9 +97,10 @@ class StaticFlagSocket(object):
         j = json.loads(msg)
         flag_txt = str(j['flag'])
         hacker_ip = conn.peer.host
-        
+        self.logger.info("Hacker IP: %s"%hacker_ip)
         hacker_id = -1
         for id, team_ip, cidr_size in TEAM_DATA:
+            self.logger.info("team IP: %s"%team_ip)
             if(hacker_ip == team_ip ):
                 hacker_id = id
                 break              
