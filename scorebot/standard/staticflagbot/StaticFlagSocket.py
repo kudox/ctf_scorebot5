@@ -81,10 +81,10 @@ class StaticFlagSocket(object):
         
         for team in conf.teams:
             assert(team.id == len(TEAM_DATA))
-            cidr_ip,cidr_mask_txt = team.cidr.split("/")
+            #cidr_ip,cidr_mask_txt = team.cidr.split("/")
             self.logger.info("Team Host: %s"%team.host)
-            team_ip = extractNetworkValue(team.host,int(cidr_mask_txt))
-            TEAM_DATA.append((team.id,team_ip,int(cidr_mask_txt)))
+            #team_ip = extractNetworkValue(team.host,int(cidr_mask_txt))
+            TEAM_DATA.append((team.id,team.host))
 
         FLAG_MANAGER = conf.buildFlagManager()
     
@@ -100,7 +100,7 @@ class StaticFlagSocket(object):
         hacker_ip = conn.peer.host
         self.logger.info("Hacker IP: %s"%hacker_ip)
         hacker_id = -1
-        for id, team_ip, cidr_size in TEAM_DATA:
+        for id, team_ip in TEAM_DATA:
             self.logger.info("team IP: %s"%team_ip)
             if(hacker_ip == team_ip ):
                 hacker_id = id
