@@ -129,9 +129,6 @@ class StaticFlagSocket(object):
             
             if flag_txt in self.staticFlags:
                 self.logger.info("Valid Flag Lookup: %s"%flag_txt)
-                self.staticFlags.remove(flag_txt)
-                self.logger.info("Removed Submitted Flag: %s"%flag_txt)
-                self.logger.info("Static Flag Count: %d"%len(self.staticFlags))
                 
                 #HACK: so we can use the same flag logic for parsing.
                 #TODO: make an egg parser!
@@ -144,9 +141,14 @@ class StaticFlagSocket(object):
                 result = flag_validator.validate(hacker_id,flag)
         
                 if(result == FlagValidator.VALID):
+                    self.staticFlags.remove(flag_txt)
+                    self.logger.info("Removed Submitted Flag: %s"%flag_txt)
+                    self.logger.info("Static Flag Count: %d"%len(self.staticFlags))
                     flag_collector.enque((hacker_id,flag))
                     j = {'result':"Flag Accepted"}
                     conn.sendMessage(json.dumps(j))
+                else:
+                    j = {'result':result}
             else:
                 self.logger.info( "Invalid Flag")
                 j = {'result':"Invalid Flag"}
