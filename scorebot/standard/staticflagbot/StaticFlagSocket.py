@@ -137,18 +137,17 @@ class StaticFlagSocket(object):
                 flag_validator = getSharedEggValidator()
                 flag_collector = getSharedEggCollector()
                 flag = FLAG_MANAGER.toFlag(flag_txt)
-    
-                result = flag_validator.validate(hacker_id,flag)
-        
-                if(result == FlagValidator.VALID):
+                try:
+                    result = flag_validator.validate(hacker_id,flag)
                     self.staticFlags.remove(orig_flag)
                     self.logger.info("Removed Submitted Flag: %s"%orig_flag)
                     self.logger.info("Static Flag Count: %d"%len(self.staticFlags))
                     flag_collector.enque((hacker_id,flag))
                     j = {'result':"Flag Accepted"}
                     conn.sendMessage(json.dumps(j))
-                else:
-                    j = {'result':result}
+                    
+                except FlagParseException as e:
+                    j = {'result':e}
                     conn.sendMessage(json.dumps(j))
             else:
                 self.logger.info( "Invalid Flag")
