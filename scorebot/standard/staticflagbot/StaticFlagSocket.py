@@ -149,6 +149,7 @@ class StaticFlagSocket(object):
                     conn.sendMessage(json.dumps(j))
                 else:
                     j = {'result':result}
+                    conn.sendMessage(json.dumps(j))
             else:
                 self.logger.info( "Invalid Flag")
                 j = {'result':"Invalid Flag"}
