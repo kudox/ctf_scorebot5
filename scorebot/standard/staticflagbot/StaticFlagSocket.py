@@ -82,6 +82,7 @@ class StaticFlagSocket(object):
         for team in conf.teams:
             assert(team.id == len(TEAM_DATA))
             cidr_ip,cidr_mask_txt = team.cidr.split("/")
+            self.logger.info("Team Host: %s"%team.host)
             team_ip = extractNetworkValue(team.host,int(cidr_mask_txt))
             TEAM_DATA.append((team.id,team_ip,int(cidr_mask_txt)))
 
